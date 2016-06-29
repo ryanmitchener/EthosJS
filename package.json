@@ -1,0 +1,10 @@
+{
+    "name": "EthosJS",
+    "version": "0.1.0",
+    "devDependencies": {
+        "gulp": "latest",
+        "gulp-uglify": "latest",
+        "gulp-concat": "latest",
+        "gulp-rename": "latest"
+    }
+}
