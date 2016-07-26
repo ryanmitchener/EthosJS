@@ -5,8 +5,8 @@ var uglify = require("gulp-uglify");
 var package = require("./package.json");
 
 // Setup scripts to watch, minify, and concat
-var scripts = ["src/**/*.js"];
-var destination = "./build/";
+var scripts = ["src/EthosJS.js", "src/**/*.js"];
+var destination = "./dist/";
 
 
 // Watch file changes

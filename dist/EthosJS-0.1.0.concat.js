@@ -108,3 +108,128 @@
         return recurse(dst, src);
     }
 })();
+
+/* -------------------- */
+
+(function() {
+    EthosJS.Anim = {};
+
+
+    /**
+     * RequestAnimationFrame polyfill (https://gist.github.com/paulirish/1579671)
+     * ------------------------------------------------------------------------ 
+     */ 
+    var lastTime = 0;
+    var id = null;
+    var vendors = ["ms", "moz", "webkit", "o"];
+
+    for (var x = 0, l = vendors.length; x < l && !window.requestAnimationFrame; ++x) {
+        window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
+        window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame'] 
+                                   || window[vendors[x]+'CancelRequestAnimationFrame'];
+    }
+ 
+    if (!window.requestAnimationFrame) {
+        window.requestAnimationFrame = function(callback, element) {
+            var currTime = new Date().getTime();
+            var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+            id = window.setTimeout(function() { callback(currTime + timeToCall); }, timeToCall);
+            lastTime = currTime + timeToCall;
+            return id;
+        };
+    }
+ 
+    if (!window.cancelAnimationFrame) {
+        window.cancelAnimationFrame = function(id) { clearTimeout(id); };
+    }
+})();
+
+/* -------------------- */
+
+(function() {
+    EthosJS.Bit = {};
+
+    // Set bits
+
+    // Unset bits
+})();
+
+/* -------------------- */
+
+(function() {
+    EthosJS.Browser = {};
+
+    // Setup isMobile property
+    EthosJS.Browser.isMobile = (/Android|iPad|iPhone|iPod/i).test(navigator.userAgent);
+
+
+
+    /**
+     * Misc Execution
+     * ------------------------------------------------------------------------
+     */
+
+    // Set if the browser is mobile or desktop browser
+    if (EthosJS.Browser.isMobile) {
+        document.body.classList.add("ethos-js--mobile");
+    } else {
+        document.body.classList.add("ethos-js--desktop");
+    }
+})();
+
+/* -------------------- */
+
+(function() {
+    EthosJS.Event = {};
+
+    // Function for throttling certain events such as resize
+    // Taken from: https://developer.mozilla.org/en-US/docs/Web/Events/resize
+    EthosJS.Event.throttle = function(throttledEvent, customEventName, obj) {
+        obj = obj || window;
+        var running = false;
+        var func = function() {
+            if (running) { return; }
+            running = true;
+            requestAnimationFrame(function() {
+                // TODO: IE cannot use new CustomEvent()
+                obj.dispatchEvent(new CustomEvent(customEventName));
+                running = false;
+            });
+        };
+        obj.addEventListener(throttledEvent, func);
+    };
+})();
+
+/* -------------------- */
+
+(function() {
+    EthosJS.UI = {};
+
+    /**
+     * Public methods
+     * ------------------------------------------------------------------------
+     */
+
+    // Transform 
+    EthosJS.UI.transform = getTransform();
+
+
+
+    /**
+     * Private methods
+     * ------------------------------------------------------------------------
+     */
+
+    // Get the transform according to the browser
+    function getTransform() {
+        if (document.body.style.transform !== undefined) {
+            return "transform";    
+        } else if (document.body.style.webkitTransform !== undefined) {
+            return "webkitTransform";
+        } else if (document.body.style.msTransform !== undefined) {
+            return "msTransform";
+        } else {
+            return "transform";
+        }
+    }
+})();
