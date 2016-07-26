@@ -13,10 +13,6 @@
     var matches = null;
 
 
-    /**
-     * Public methods
-     * ------------------------------------------------------------------------
-     */
 
     // Setup matches
     EthosJS.matches = function(node, selector) {
