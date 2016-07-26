@@ -25,7 +25,7 @@
                 matches = "msMatchesSelector";
             }
         }
-        return node.matches(selector);
+        return node[matches](selector);
     }
 
 
