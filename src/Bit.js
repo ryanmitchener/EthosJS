@@ -1,7 +1,2 @@
-(function() {
-    EthosJS.Bit = {};
-
-    // Set bits
-
-    // Unset bits
-})();
+// Set bits
+// Unset bits
