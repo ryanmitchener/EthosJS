@@ -5,7 +5,6 @@ EthosJS.Animation = function(curve, duration, callback) {
     this.duration = duration || 500; // Default to 500 ms
     this.callback = callback || null;
     this.iterations = 1;
-    this.frames = null;
 
     // Vars that need reset
     this.start = null;
@@ -32,6 +31,7 @@ EthosJS.Animation.prototype.setFrames = function(frames) {
 
 EthosJS.Animation.prototype.setIterations = function(iterations) {
     this.iterations = iterations;
+    this.iterationsRemaining = this.iterations;
     return this;
 };
 
@@ -49,10 +49,10 @@ EthosJS.Animation.prototype.setCallback = function(callback) {
 
 
 EthosJS.Animation.prototype.play = function() {
-    this.start = new Date().getTime() - this.startFrom;
     if (this.paused) {
         this.paused = false;
     }
+    this.start = new Date().getTime() - this.startFrom;
     this.end = this.start + this.duration;
     this.started = true;
     this._render();
@@ -67,14 +67,17 @@ EthosJS.Animation.prototype.pause = function() {
 };
 
 
-EthosJS.Animation.prototype.reset = function() {
+EthosJS.Animation.prototype.reset = function(resetIterations) {
+    resetIterations = (resetIterations === undefined) ? true : resetIterations;
     this.start = null;
     this.end = null; 
     this.paused = false;
     this.started = false;
     this.finished = false;
     this.startFrom = 0;
-    this.iterationsRemaining = this.iterations;
+    if (resetIterations) {
+        this.iterationsRemaining = this.iterations;
+    }
     return this;
 };
 
@@ -82,7 +85,7 @@ EthosJS.Animation.prototype.reset = function() {
 // Render loop
 // TODO: This has a priority on finishing on time rather than the animation being accurate,
 // The priority could instead be on the animation being accurate. This would require using
-// desired frame count instead of duration
+// desired frame count instead of timed duration
 EthosJS.Animation.prototype._render = function() {
     // Return if paused
     if (this.paused) {
@@ -97,18 +100,20 @@ EthosJS.Animation.prototype._render = function() {
 
     // Fire callback
     if (this.callback !== null) {
-        this.callback(x);
+        this.callback.call(this, x);
     }
 
     // Check if current iteration is done
     if (elapsed >= this.duration) {
-        this.iterationsRemaining--;
+        this.iterationsRemaining -= (this.iterationsRemaining > 0) ? 1 : 0;
         if (this.iterationsRemaining === 0) {
             this.finished = true;
             return;
         }
-        // this.reset();
-        // this.play();
+        // If there are iterations remaining, reset, play, and return
+        this.reset(false);
+        this.play();
+        return;
     }
     requestAnimationFrame(this._render.bind(this));
 };

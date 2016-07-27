@@ -1,6 +1,3 @@
-console.log("Beginning tests");
-console.log("Ending tests");
-
 var box = document.querySelector("div");
 var start = 0;
 var end = 500;
@@ -9,7 +6,7 @@ function test(x) {
 }
 
 var anim = new ejs.Animation()
-    .setCurve(new EthosJS.CubicBezier(0.68, -0.55, 0.265, 1.55))
+    .setCurve(new EthosJS.CubicBezier(0.645, 0.045, 0.355, 1))
     .setDuration(2000)
     .setIterations(2)
     .setCallback(test);
