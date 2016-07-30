@@ -101,23 +101,33 @@ EthosJS.copy = function(src, preservePrototype) {
 
 // Animate method
 // http://easings.net/#
-EthosJS.Animation = function(curve, duration, callback) {
+EthosJS.Animation = function(curve, duration, renderCallback) {
     this.curve = curve || new EthosJS.CubicBezier(1, 1, 1, 1); // Default to linear
     this.duration = duration || 500; // Default to 500 ms
-    this.callback = callback || null;
+    this.renderCallback = renderCallback || null;
+    this.onFinishListener = null;
     this.iterations = 1;
 
     // Vars that need reset
     this.start = null;
-    this.end = null; 
-    this.paused = false;
-    this.started = false;
-    this.finished = false;
+    this.end = null;
+    this.state = EthosJS.Animation.STATE_IDLE; 
     this.startFrom = 0;
     this.iterationsRemaining = this.iterations;
 };
 
+// State constants
+EthosJS.Animation.STATE_IDLE = 0;
+EthosJS.Animation.STATE_PLAYING = 1;
+EthosJS.Animation.STATE_PAUSED = 2;
+EthosJS.Animation.STATE_FINISHED = 3;
 
+
+/**
+ * Set the CubicBezier curve
+ * 
+ * @param EthosJS.CubicBezier curve
+ */
 EthosJS.Animation.prototype.setCurve = function(curve) {
     this.curve = curve;
     return this;
@@ -143,19 +153,26 @@ EthosJS.Animation.prototype.setDuration = function(duration) {
 };
 
 
-EthosJS.Animation.prototype.setCallback = function(callback) {
-    this.callback = callback;
+EthosJS.Animation.prototype.setRenderCallback = function(renderCallback) {
+    this.renderCallback = renderCallback;
+    return this;
+};
+
+
+EthosJS.Animation.prototype.setOnFinishListener = function(listener) {
+    this.onFinishListener = listener;
     return this;
 };
 
 
 EthosJS.Animation.prototype.play = function() {
-    if (this.paused) {
-        this.paused = false;
+    if (this.state === EthosJS.Animation.STATE_PAUSED) {
+        this.start = new Date().getTime() - this.startFrom;
+    } else {
+        this.start = new Date().getTime();
     }
-    this.start = new Date().getTime() - this.startFrom;
+    this.state = EthosJS.Animation.STATE_PLAYING;
     this.end = this.start + this.duration;
-    this.started = true;
     this._render();
     return this;
 };
@@ -163,7 +180,7 @@ EthosJS.Animation.prototype.play = function() {
 
 EthosJS.Animation.prototype.pause = function() {
     this.startFrom = new Date().getTime() - this.start;
-    this.paused = true;
+    this.state = EthosJS.Animation.STATE_PAUSED;
     return this;
 };
 
@@ -172,9 +189,7 @@ EthosJS.Animation.prototype.reset = function(resetIterations) {
     resetIterations = (resetIterations === undefined) ? true : resetIterations;
     this.start = null;
     this.end = null; 
-    this.paused = false;
-    this.started = false;
-    this.finished = false;
+    this.state = EthosJS.Animation.STATE_IDLE;
     this.startFrom = 0;
     if (resetIterations) {
         this.iterationsRemaining = this.iterations;
@@ -189,7 +204,7 @@ EthosJS.Animation.prototype.reset = function(resetIterations) {
 // desired frame count instead of timed duration
 EthosJS.Animation.prototype._render = function() {
     // Return if paused
-    if (this.paused) {
+    if (this.state === EthosJS.Animation.STATE_PAUSED) {
         return;
     }
 
@@ -200,15 +215,18 @@ EthosJS.Animation.prototype._render = function() {
     var x = this.curve.solve(curvePos, EthosJS.CubicBezier.solveEpsilon(this.duration));
 
     // Fire callback
-    if (this.callback !== null) {
-        this.callback.call(this, x);
+    if (this.renderCallback !== null) {
+        this.renderCallback.call(this, x);
     }
 
     // Check if current iteration is done
     if (elapsed >= this.duration) {
         this.iterationsRemaining -= (this.iterationsRemaining > 0) ? 1 : 0;
         if (this.iterationsRemaining === 0) {
-            this.finished = true;
+            this.state = EthosJS.Animation.STATE_FINISHED;
+            if (this.onFinishListener !== null) {
+                this.onFinishListener();
+            }
             return;
         }
         // If there are iterations remaining, reset, play, and return
