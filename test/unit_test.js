@@ -3,7 +3,6 @@ var start = 0;
 var end = 500;
 
 var anim = new ejs.Animation()
-    .setCurve(new EthosJS.CubicBezier(0.645, 0.045, 0.355, 1))
     .setCurve(EthosJS.Curve.EaseInOutBack)
     .setDuration(1000)
     // .setIterations(2)
@@ -11,7 +10,7 @@ var anim = new ejs.Animation()
         console.log("Finished!");
     })
     .setRenderCallback(function(x) {
-        box.style.left = ((end - start) * x) + "px";
+        box.style.transform = "translateX(" + ((end - start) * x) + "px)";
     });
 
 document.addEventListener("click", function() {
@@ -24,3 +23,7 @@ document.addEventListener("click", function() {
         anim.pause();
     }
 });
+
+window.addEventListener("windowsizechange", function(ev) {
+    console.log(ev.detail);
+})

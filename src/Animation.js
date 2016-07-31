@@ -15,6 +15,7 @@ EthosJS.Animation = function(curve, duration, renderCallback) {
     this.iterationsRemaining = this.iterations;
 };
 
+
 // State constants
 EthosJS.Animation.STATE_IDLE = 0;
 EthosJS.Animation.STATE_PLAYING = 1;
@@ -33,12 +34,9 @@ EthosJS.Animation.prototype.setCurve = function(curve) {
 };
 
 
-EthosJS.Animation.prototype.setFrames = function(frames) {
-    this.frames = frames;
-    return this;
-};
-
-
+/**
+ * Set the amount of times the animation will play
+ */
 EthosJS.Animation.prototype.setIterations = function(iterations) {
     this.iterations = iterations;
     this.iterationsRemaining = this.iterations;
@@ -46,24 +44,46 @@ EthosJS.Animation.prototype.setIterations = function(iterations) {
 };
 
 
+/**
+ * Set the duration of the animation
+ * 
+ * @param int duration The duration in milliseconds
+ */
 EthosJS.Animation.prototype.setDuration = function(duration) {
     this.duration = duration;
     return this;
 };
 
 
+/**
+ * Set the render callback
+ * This callback is called many times a second once the animation has started.
+ * Keep it as lean as possible.
+ * 
+ * @param function(time) renderCallback The callback
+ */
 EthosJS.Animation.prototype.setRenderCallback = function(renderCallback) {
     this.renderCallback = renderCallback;
     return this;
 };
 
 
+/**
+ * Set the onFinishListener
+ * 
+ * @param function listener The listener that will be called on animation completion
+ */
 EthosJS.Animation.prototype.setOnFinishListener = function(listener) {
     this.onFinishListener = listener;
     return this;
 };
 
 
+/**
+ * Play the animation
+ * This method will start the animation. If the animation is playing when this method
+ * is called, the animation will start over
+ */
 EthosJS.Animation.prototype.play = function() {
     if (this.state === EthosJS.Animation.STATE_PAUSED) {
         this.start = new Date().getTime() - this.startFrom;
@@ -77,6 +97,9 @@ EthosJS.Animation.prototype.play = function() {
 };
 
 
+/**
+ * Pause the animation
+ */
 EthosJS.Animation.prototype.pause = function() {
     this.startFrom = new Date().getTime() - this.start;
     this.state = EthosJS.Animation.STATE_PAUSED;
@@ -84,6 +107,12 @@ EthosJS.Animation.prototype.pause = function() {
 };
 
 
+/**
+ * Reset the animation
+ * 
+ * @param boolean resetIterations If TRUE, the amount of iterations that have been
+ *      completed will be reset to the original number of iterations set by the user.
+ */
 EthosJS.Animation.prototype.reset = function(resetIterations) {
     resetIterations = (resetIterations === undefined) ? true : resetIterations;
     this.start = null;

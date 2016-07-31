@@ -153,6 +153,7 @@ EthosJS.Animation = function(curve, duration, renderCallback) {
     this.iterationsRemaining = this.iterations;
 };
 
+
 // State constants
 EthosJS.Animation.STATE_IDLE = 0;
 EthosJS.Animation.STATE_PLAYING = 1;
@@ -171,12 +172,9 @@ EthosJS.Animation.prototype.setCurve = function(curve) {
 };
 
 
-EthosJS.Animation.prototype.setFrames = function(frames) {
-    this.frames = frames;
-    return this;
-};
-
-
+/**
+ * Set the amount of times the animation will play
+ */
 EthosJS.Animation.prototype.setIterations = function(iterations) {
     this.iterations = iterations;
     this.iterationsRemaining = this.iterations;
@@ -184,24 +182,46 @@ EthosJS.Animation.prototype.setIterations = function(iterations) {
 };
 
 
+/**
+ * Set the duration of the animation
+ * 
+ * @param int duration The duration in milliseconds
+ */
 EthosJS.Animation.prototype.setDuration = function(duration) {
     this.duration = duration;
     return this;
 };
 
 
+/**
+ * Set the render callback
+ * This callback is called many times a second once the animation has started.
+ * Keep it as lean as possible.
+ * 
+ * @param function(time) renderCallback The callback
+ */
 EthosJS.Animation.prototype.setRenderCallback = function(renderCallback) {
     this.renderCallback = renderCallback;
     return this;
 };
 
 
+/**
+ * Set the onFinishListener
+ * 
+ * @param function listener The listener that will be called on animation completion
+ */
 EthosJS.Animation.prototype.setOnFinishListener = function(listener) {
     this.onFinishListener = listener;
     return this;
 };
 
 
+/**
+ * Play the animation
+ * This method will start the animation. If the animation is playing when this method
+ * is called, the animation will start over
+ */
 EthosJS.Animation.prototype.play = function() {
     if (this.state === EthosJS.Animation.STATE_PAUSED) {
         this.start = new Date().getTime() - this.startFrom;
@@ -215,6 +235,9 @@ EthosJS.Animation.prototype.play = function() {
 };
 
 
+/**
+ * Pause the animation
+ */
 EthosJS.Animation.prototype.pause = function() {
     this.startFrom = new Date().getTime() - this.start;
     this.state = EthosJS.Animation.STATE_PAUSED;
@@ -222,6 +245,12 @@ EthosJS.Animation.prototype.pause = function() {
 };
 
 
+/**
+ * Reset the animation
+ * 
+ * @param boolean resetIterations If TRUE, the amount of iterations that have been
+ *      completed will be reset to the original number of iterations set by the user.
+ */
 EthosJS.Animation.prototype.reset = function(resetIterations) {
     resetIterations = (resetIterations === undefined) ? true : resetIterations;
     this.start = null;
@@ -370,7 +399,33 @@ EthosJS.isMobile = (/Android|iPad|iPhone|iPod/i).test(navigator.userAgent);
     } else {
         document.body.classList.add("ethos-js--desktop");
     }
+
+    // // Set the browser constant
+    // var ieTest1 = /Trident\/.*rv:([0-9]{2,2})\.0/.exec(navigator.userAgent);
+    // var ieTest2 = /MSIE\s([0-9]{1,2})\.0/.exec(navigator.userAgent);  
+    // if ((ieTest1.length > 0 || ieTest2.length > 0) && 
+    //         navigator.userAgent.indexOf("opera") === -1) {
+    //     EthosJS.browser = {name: "IE", version: 1};
+    // } else if () {
+
+    // }
 })();
+
+/* -------------------- */
+
+EthosJS.Config = {
+    /**
+     * Window sizes to get events for on resize
+     * This should be an array of integers increasing in sizes
+     * e.g. [480, 640, 800, 1024, 1200]
+     */
+    windowSizeEvents: []
+}
+
+
+/* -------------------- */
+
+
 
 /* -------------------- */
 
@@ -574,6 +629,55 @@ EthosJS.dispatchEvent = function(target, type, data) {
 
 /* -------------------- */
 
+(function() {
+    EthosJS.formToJSON = function(element) {
+        if (typeof element === "string") {
+            element = document.querySelector(element);
+        }
+        var fields = element.querySelectorAll("input,select,textarea");
+        var data = {};
+        for (var i=0, l=fields.length; i < l; i++) {
+            var field = fields[i];
+            if (field.tagName === "INPUT") {
+                var type = field.getAttribute("type");
+                if (type === "checkbox") {
+                	setValue(data, field.name, field.checked);
+                } else if (type === "radio") {
+                	if (field.checked) {
+						setValue(data, field.name, field.value);
+                	}
+                } else {
+                    setValue(data, field.name, field.value);
+                }
+            } else if (field.tagName === "SELECT") {
+                setValue(data, field.name, field.value);
+            } else if (field.tagName === "TEXTAREA") {
+                setValue(data, field.name, field.value);
+            }
+        }
+        return data;
+    }
+
+
+    // Set the value of an object based on string key (supports nested objects)
+    function setValue(obj, key, value) {
+        var prefixes = key.split(".");
+        var current = obj;
+
+        for (var i=0, l=prefixes.length; i < l; i++) {
+            if (i === prefixes.length - 1) {
+            	current[prefixes[i]] = value;
+            	return;
+            } else if (current[prefixes[i]] === undefined) {
+                current[prefixes[i]] = {};
+            };
+            current = current[prefixes[i]];
+        }
+    }
+})();
+
+/* -------------------- */
+
 // Get the transform string
 EthosJS.transform = (function() {
     if (document.body.style.transform !== undefined) {
@@ -584,4 +688,54 @@ EthosJS.transform = (function() {
         return "msTransform";
     }
     return "transform";        
+})();
+
+
+// Dispatch events on the document for different window sizes
+(function() {
+    var lastWidth = innerWidth;
+    var direction = 0;
+    var range = [0, Number.MAX_SAFE_INTEGER];
+    getCurrentIndex();
+
+
+    // Check the window size
+    function checkWindowSize() {
+        direction = (lastWidth < innerWidth) ? 1 : 0;
+        lastWidth = innerWidth;
+        if (innerWidth >= range[1]) {
+            EthosJS.dispatchEvent(window, "windowsizechange", {size: range[1], direction: direction});
+            getCurrentIndex();
+        } else if (innerWidth <= range[0]) {
+            EthosJS.dispatchEvent(window, "windowsizechange", {size: range[0], direction: direction});
+            getCurrentIndex();
+        }
+    }
+
+
+    // Get the current index
+    function getCurrentIndex() {
+        var index = -1;
+        for (var i=0, l=EthosJS.Config.windowSizeEvents.length; i<l; i++) {
+            if (innerWidth > EthosJS.Config.windowSizeEvents[i]) {
+                index = i;
+            } else {
+                break;
+            }
+        }
+        if (index === EthosJS.Config.windowSizeEvents.length - 1) {
+            range[0] = EthosJS.Config.windowSizeEvents[index];
+            range[1] = Number.MAX_SAFE_INTEGER;
+        } else if (index === -1) {
+            range[0] = 0;
+            range[1] = EthosJS.Config.windowSizeEvents[0];
+        } else {
+            range[0] = EthosJS.Config.windowSizeEvents[index];
+            range[1] = EthosJS.Config.windowSizeEvents[index + 1];
+        }
+    }
+
+
+    // Add resize event listener
+    window.addEventListener("resize", checkWindowSize);
 })();
