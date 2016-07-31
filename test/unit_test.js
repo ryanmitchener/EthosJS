@@ -4,8 +4,9 @@ var end = 500;
 
 var anim = new ejs.Animation()
     .setCurve(new EthosJS.CubicBezier(0.645, 0.045, 0.355, 1))
-    .setDuration(2000)
-    .setIterations(2)
+    .setCurve(EthosJS.Curve.EaseInOutBack)
+    .setDuration(1000)
+    // .setIterations(2)
     .setOnFinishListener(function() {
         console.log("Finished!");
     })

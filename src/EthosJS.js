@@ -25,6 +25,9 @@ EthosJS.matches = (function() {
 // Find the closest ancestor to an element that matches a selector
 // Optional limit parameter limits the amount of parents to traverse
 EthosJS.parent = function(element, selector, limit) {
+    if (typeof element === "string") {
+        element = document.querySelector(element);
+    }
     limit = (limit - 1) || -1;
     element = element.parentElement;
     while (element !== null && !EthosJS.matches(element, selector)) {
@@ -36,6 +39,24 @@ EthosJS.parent = function(element, selector, limit) {
     }
     return element;
 };
+
+
+// Find if a sibling of an element exists
+EthosJS.sibling = function(element, selector) {
+    if (typeof element === "string") {
+        element = document.querySelector(element);
+    }
+    if (element.parentElement === null) {
+        return null;
+    }
+    var children = element.parentElement.children;
+    for (var i=0, l=children.length; i<l; i++) {
+        if (EthosJS.matches(children[i], selector)) {
+            return children[i];
+        }
+    }
+    return null;
+}
 
 
 // Find the smallest number in an array
@@ -96,3 +117,19 @@ EthosJS.copy = function(src, preservePrototype) {
     dst = Object.create(Object.getPrototypeOf(src));
     return recurse(dst, src);
 };
+
+
+/**
+ * Animate scroll to a particular Y coordinate on the page
+ */
+EthosJS.scrollTo = function(y) {
+    var start = pageYOffset;
+    var difference = Math.abs(start - y);
+    new EthosJS.Animation()
+        .setCurve(EthosJS.Curve.EaseInOutQuart)
+        .setDuration(800)
+        .setRenderCallback(function(interpolatedTime) {
+            scrollTo(pageXOffset, start + ((y > start) ? (difference * interpolatedTime) : -(difference * interpolatedTime)));
+        })
+        .play();
+}

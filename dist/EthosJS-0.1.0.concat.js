@@ -25,6 +25,9 @@ EthosJS.matches = (function() {
 // Find the closest ancestor to an element that matches a selector
 // Optional limit parameter limits the amount of parents to traverse
 EthosJS.parent = function(element, selector, limit) {
+    if (typeof element === "string") {
+        element = document.querySelector(element);
+    }
     limit = (limit - 1) || -1;
     element = element.parentElement;
     while (element !== null && !EthosJS.matches(element, selector)) {
@@ -36,6 +39,24 @@ EthosJS.parent = function(element, selector, limit) {
     }
     return element;
 };
+
+
+// Find if a sibling of an element exists
+EthosJS.sibling = function(element, selector) {
+    if (typeof element === "string") {
+        element = document.querySelector(element);
+    }
+    if (element.parentElement === null) {
+        return null;
+    }
+    var children = element.parentElement.children;
+    for (var i=0, l=children.length; i<l; i++) {
+        if (EthosJS.matches(children[i], selector)) {
+            return children[i];
+        }
+    }
+    return null;
+}
 
 
 // Find the smallest number in an array
@@ -96,6 +117,22 @@ EthosJS.copy = function(src, preservePrototype) {
     dst = Object.create(Object.getPrototypeOf(src));
     return recurse(dst, src);
 };
+
+
+/**
+ * Animate scroll to a particular Y coordinate on the page
+ */
+EthosJS.scrollTo = function(y) {
+    var start = pageYOffset;
+    var difference = Math.abs(start - y);
+    new EthosJS.Animation()
+        .setCurve(EthosJS.Curve.EaseInOutQuart)
+        .setDuration(800)
+        .setRenderCallback(function(interpolatedTime) {
+            scrollTo(pageXOffset, start + ((y > start) ? (difference * interpolatedTime) : -(difference * interpolatedTime)));
+        })
+        .play();
+}
 
 /* -------------------- */
 
@@ -271,8 +308,54 @@ EthosJS.Animation.prototype._render = function() {
 
 /* -------------------- */
 
-// Set bits
-// Unset bits
+/** 
+ * Set a bit
+ * 
+ * @param int byte The value to set a bit on
+ * @param int bit The bit index to set (0 indexed)  
+ */
+EthosJS.setBit = function(byte, bit) {
+    return byte | (1 << bit);
+}
+
+
+/** 
+ * Unset a bit
+ * 
+ * @param int byte The value to set a bit on
+ * @param int bit The bit index to set (0 indexed)  
+ */
+EthosJS.unsetBit = function(byte, bit) {
+    return byte & ~(1 << bit);
+}
+
+
+/** 
+ * Append a value to the beginning of an existing byte/integer
+ * 
+ * @param int byte The value to append another value to
+ * @param int value The value to append
+ * @param int maxValue (optional) The maximum value the appended value can be 
+ */
+EthosJS.appendBitValue = function(byte, value, maxValue) {
+    maxValue = (maxValue === undefined) ? value : maxValue;
+    var shift = Math.ceil(Math.log2(maxValue));
+    return (byte << shift) | value;
+}
+
+
+/** 
+ * Read a value from a byte/integer
+ * This function allows reading of whole values based on a maximum value
+ * 
+ * @param int byte The value to read from
+ * @param int shift The shift amount/location in the data to start reading a byte from 
+ * @param int maxValue The maximum value the read value can be  
+ */
+EthosJS.readBitValue = function(byte, shift, maxValue) {
+    var mask = Math.pow(2, Math.ceil(Math.log2(maxValue))) - 1;
+    return (byte >> shift) & mask;
+}
 
 /* -------------------- */
 
@@ -407,6 +490,39 @@ EthosJS.CubicBezier.prototype.solve = function(x, epsilon) {
         return 1.0 + this.m_endGradient * (x - 1.0);
     }
     return this.sampleCurveY(this.solveCurveX(x, epsilon));
+};
+
+/* -------------------- */
+
+// Different cubic bezier curves for animations (http://easings.net/)
+EthosJS.Curve = {
+    Linear: new EthosJS.CubicBezier(1,1,1,1),
+    Ease: new EthosJS.CubicBezier(0,0,0.2,1),
+    EaseInOut: new EthosJS.CubicBezier(0.42, 0, 0.58, 1),
+    
+    EaseInSine: new EthosJS.CubicBezier(0.47, 0, 0.745, 0.715),
+    EaseInCubic: new EthosJS.CubicBezier(0.55, 0.055, 0.675, 0.19),
+    EaseInQuint: new EthosJS.CubicBezier(0.755, 0.05, 0.855, 0.06),
+    EaseInQuad: new EthosJS.CubicBezier(0.55, 0.085, 0.68, 0.53),
+    EaseInQuart: new EthosJS.CubicBezier(0.895, 0.03, 0.685, 0.22),
+    EaseInExpo: new EthosJS.CubicBezier(0.95, 0.05, 0.795, 0.035),
+    EaseInBack: new EthosJS.CubicBezier(0.6, -0.28, 0.735, 0.045),
+
+    EaseOutSine: new EthosJS.CubicBezier(0.445, 0.05, 0.55, 0.95),
+    EaseOutCubic: new EthosJS.CubicBezier(0.215, 0.61, 0.355, 1),
+    EaseOutQuint: new EthosJS.CubicBezier(0.23, 1, 0.32, 1),
+    EaseOutQuad: new EthosJS.CubicBezier(0.25, 0.46, 0.45, 0.94),
+    EaseOutQuart: new EthosJS.CubicBezier(0.165, 0.84, 0.44, 1),
+    EaseOutExpo: new EthosJS.CubicBezier(0.19, 1, 0.22, 1),
+    EaseOutBack: new EthosJS.CubicBezier(0.175, 0.885, 0.32, 1.275),
+
+    EaseInOutSine: new EthosJS.CubicBezier(0.445, 0.05, 0.55, 0.95),
+    EaseInOutCubic: new EthosJS.CubicBezier(0.645, 0.045, 0.355, 1),
+    EaseInOutQuint: new EthosJS.CubicBezier(0.86, 0, 0.07, 1),
+    EaseInOutQuad: new EthosJS.CubicBezier(0.455, 0.03, 0.515, 0.955),
+    EaseInOutQuart: new EthosJS.CubicBezier(0.77, 0, 0.175, 1),
+    EaseInOutExpo: new EthosJS.CubicBezier(1, 0, 0, 1),
+    EaseInOutBack: new EthosJS.CubicBezier(0.68, -0.55, 0.265, 1.55)
 };
 
 /* -------------------- */
