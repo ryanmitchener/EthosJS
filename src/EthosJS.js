@@ -120,16 +120,21 @@ EthosJS.copy = function(src, preservePrototype) {
 
 
 /**
- * Animate scroll to a particular Y coordinate on the page
+ * Animate scroll to a particular Y coordinate on the page or on an element
  */
-EthosJS.scrollTo = function(y) {
-    var start = pageYOffset;
+EthosJS.scrollTo = function(element, y) {
+    var isWindow = (element === null) ? true : false; 
+    var start = (isWindow) ? pageYOffset : element.scrollTop;
     var difference = Math.abs(start - y);
     new EthosJS.Animation()
         .setCurve(EthosJS.Curve.EaseInOutQuart)
         .setDuration(800)
         .setRenderCallback(function(interpolatedTime) {
-            scrollTo(pageXOffset, start + ((y > start) ? (difference * interpolatedTime) : -(difference * interpolatedTime)));
+            if (isWindow) {
+                scrollTo(pageXOffset, start + ((y > start) ? (difference * interpolatedTime) : -(difference * interpolatedTime)));
+            } else {
+                element.scrollTop = (start + ((y > start) ? (difference * interpolatedTime) : -(difference * interpolatedTime)));
+            }
         })
         .play();
 }

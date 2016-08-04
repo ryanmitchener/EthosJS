@@ -120,16 +120,21 @@ EthosJS.copy = function(src, preservePrototype) {
 
 
 /**
- * Animate scroll to a particular Y coordinate on the page
+ * Animate scroll to a particular Y coordinate on the page or on an element
  */
-EthosJS.scrollTo = function(y) {
-    var start = pageYOffset;
+EthosJS.scrollTo = function(element, y) {
+    var isWindow = (element === null) ? true : false; 
+    var start = (isWindow) ? pageYOffset : element.scrollTop;
     var difference = Math.abs(start - y);
     new EthosJS.Animation()
         .setCurve(EthosJS.Curve.EaseInOutQuart)
         .setDuration(800)
         .setRenderCallback(function(interpolatedTime) {
-            scrollTo(pageXOffset, start + ((y > start) ? (difference * interpolatedTime) : -(difference * interpolatedTime)));
+            if (isWindow) {
+                scrollTo(pageXOffset, start + ((y > start) ? (difference * interpolatedTime) : -(difference * interpolatedTime)));
+            } else {
+                element.scrollTop = (start + ((y > start) ? (difference * interpolatedTime) : -(difference * interpolatedTime)));
+            }
         })
         .play();
 }
@@ -582,6 +587,102 @@ EthosJS.Curve = {
 
 /* -------------------- */
 
+/**
+ * Make an element Dragger
+ * 
+ * @param string|Element element The element or query selector to be Dragger
+ */
+EthosJS.Dragger = function(element) {
+    this.element = (typeof element === "string") ? document.querySelector(element) : element;
+    this.axis = EthosJS.Dragger.AXIS_X | EthosJS.Dragger.AXIS_Y;
+    this.rebound = 0;
+    this.animating = false;
+    this.handling = false;
+
+    // Physics
+    this.velocity = 0;
+    this.friction = 0.95;
+};
+
+
+/**
+ * Set up contants
+ */
+EthosJS.Dragger.AXIS_X = 1;
+EthosJS.Dragger.AXIS_Y = 2;
+
+
+/**
+ * Attach all the necessary events
+ */
+EthosJS.Dragger.prototype.attachEvents = function() {
+    this.element.addEventListener(EthosJS.Event.pointerDown, this.handlePointerDown);
+    this.element.addEventListener(EthosJS.Event.pointerUp, this.handlePointerUp);
+    this.element.addEventListener(EthosJS.Event.pointerMove, this.handlePointerMove);
+}
+
+
+/**
+ * Set the boundaries for the element
+ * 
+ * @param mixed 
+ *      Element: If an element is passed, set the boundaries to the boundingClientRect of the element
+ *      Object{top, right, bottom, left}, sets the boundaries to the integers provided in relation to the parent element 
+ *      
+ */
+EthosJS.Dragger.prototype.setBoundaries = function(boundary) {
+    return this;
+};
+
+
+/**
+ * Set the axis the element should be Dragger on
+ * 
+ * @param int axis The axis the element is Dragger on (example: EthosJS.Dragger.AXIS_X | EthosJS.Dragger.AXIS_Y).
+ */
+EthosJS.Dragger.prototype.setAxis = function(axis) {
+    this.axis = axis;
+    return this;
+};
+
+
+/**
+ * Set the friction amount
+ * 
+ * @param int friction The amount of friction to apply after a fling (0.00 - 1.00) 0.00 being no friction 
+ */
+EthosJS.Dragger.prototype.setFriction = function(friction) {
+    this.friction = 1.00 - friction;
+    return this;
+};
+
+
+/**
+ * Set the axis the element should be Dragger on
+ * 
+ * @param int rebount The amount of rebound to have when interacting with a boundary (0.00 - 1.00) 0 being none.
+ */
+EthosJS.Dragger.prototype.setRebound = function(rebound) {
+    this.rebound = rebound;
+    return this;
+};
+
+
+EthosJS.Dragger.prototype.handlePointerDown = function(ev) {
+    this.handling = true;
+    this.animating = false;
+};
+
+EthosJS.Dragger.prototype.handlePointerUp = function(ev) {
+    this.handling = false;
+};
+
+EthosJS.Dragger.prototype.handlePointerMove = function(ev) {
+
+};
+
+/* -------------------- */
+
 // CustomEvent polyfill
 (function() {
     if (typeof window.CustomEvent === "function") {
@@ -625,6 +726,16 @@ EthosJS.throttleEvent = function(throttledEvent, customEventName, obj) {
 EthosJS.dispatchEvent = function(target, type, data) {
     var data = (data === undefined) ? null : {detail: data};
     target.dispatchEvent(new CustomEvent(type, data));
+};
+
+
+/**
+ * Event helpers
+ */
+EthosJS.Event = {
+    pointerDown: (EthosJS.isMobile) ? "touchstart" : "mousedown",
+    pointerUp: (EthosJS.isMobile) ? "touchend" : "mouseup",
+    pointerMove: (EthosJS.isMobile) ? "touchmove" : "mousemove"
 };
 
 /* -------------------- */

@@ -42,3 +42,13 @@ EthosJS.dispatchEvent = function(target, type, data) {
     var data = (data === undefined) ? null : {detail: data};
     target.dispatchEvent(new CustomEvent(type, data));
 };
+
+
+/**
+ * Event helpers
+ */
+EthosJS.Event = {
+    pointerDown: (EthosJS.isMobile) ? "touchstart" : "mousedown",
+    pointerUp: (EthosJS.isMobile) ? "touchend" : "mouseup",
+    pointerMove: (EthosJS.isMobile) ? "touchmove" : "mousemove"
+};
