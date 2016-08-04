@@ -24,6 +24,9 @@ document.addEventListener("click", function() {
     }
 });
 
+
+ejs.Config.windowSizeEvents = [400, 600, 800, 1000];
+ejs.Config.update();
 window.addEventListener("windowsizechange", function(ev) {
     console.log(ev.detail);
-})
+});

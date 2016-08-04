@@ -58,4 +58,7 @@ EthosJS.transform = (function() {
 
     // Add resize event listener
     window.addEventListener("resize", checkWindowSize);
+
+    // Register update listener for config
+    EthosJS.Config.registerUpdateListener(getCurrentIndex);
 })();
