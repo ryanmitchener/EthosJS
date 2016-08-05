@@ -11,7 +11,8 @@ EthosJS.Dragger = function(element) {
     this.handling = false;
 
     // Physics
-    this.velocity = 0;
+    this.velocityX = 0;
+    this.velocityY = 0;
     this.friction = 0.95;
 };
 
