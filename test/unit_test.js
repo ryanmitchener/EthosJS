@@ -13,16 +13,16 @@ var anim = new ejs.Animation()
         box.style.transform = "translateX(" + ((end - start) * x) + "px)";
     });
 
-document.addEventListener("click", function() {
-    if (anim.state === EthosJS.Animation.STATE_FINISHED) {
-        anim.reset();
-    }
-    if (anim.state === EthosJS.Animation.STATE_IDLE || anim.state === EthosJS.Animation.STATE_PAUSED) {
-        anim.play();
-    } else {
-        anim.pause();
-    }
-});
+// document.addEventListener("click", function() {
+//     if (anim.state === EthosJS.Animation.STATE_FINISHED) {
+//         anim.reset();
+//     }
+//     if (anim.state === EthosJS.Animation.STATE_IDLE || anim.state === EthosJS.Animation.STATE_PAUSED) {
+//         anim.play();
+//     } else {
+//         anim.pause();
+//     }
+// });
 
 
 ejs.Config.windowSizeEvents = [400, 600, 800, 1000];
@@ -30,3 +30,5 @@ ejs.Config.update();
 window.addEventListener("windowsizechange", function(ev) {
     console.log(ev.detail);
 });
+
+new ejs.Dragger(".dragger");
