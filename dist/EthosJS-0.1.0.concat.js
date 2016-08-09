@@ -622,10 +622,6 @@ EthosJS.Curve = {
 
 /* -------------------- */
 
-// TODO: Need to fix bug where holding on to the dragger and then flinging doesn't work
-// This is due to the time limit... I need to remove this and calculate velocity on 
-// mouseMove.
-
 /**
  * Make an element draggable
  * 
@@ -643,6 +639,8 @@ EthosJS.Dragger = function(element) {
     this.rebound = 0;
     this.velocityX = 0;
     this.velocityY = 0;
+    this.lastCursorX = 0;
+    this.lastCursorY = 0;
     this.friction = 0.95;
     this.start = {time: null, x: null, y: null};
     this.end = {time: null, x: null, y: null};
@@ -741,6 +739,8 @@ EthosJS.Dragger.prototype.handlePointerDown = function(ev) {
     this.start.time = new Date().getTime();
     this.start.x = ev.pageX;
     this.start.y = ev.pageY;
+    this.lastCursorX = ev.pageX;
+    this.lastCursorY = ev.pageY;
     this.updateComputedStyle();
     this.setWillChange();
     this.startMatrix = this.getTransformMatrix();
@@ -757,20 +757,11 @@ EthosJS.Dragger.prototype.handlePointerUp = function(ev) {
     }
     this.handling = false;
     this.end.time = new Date().getTime();
-    var time = (this.end.time - this.start.time);
     this.end.x = ev.pageX;
     this.end.y = ev.pageY;
 
-    // Only calculate velocity if the axis is enabled
-    if (this.axis & EthosJS.Dragger.AXIS_X) {
-        this.velocityX = ((this.end.x - this.start.x) / time) * 16.666666;
-    }
-    if (this.axis & EthosJS.Dragger.AXIS_Y) {
-        this.velocityY = ((this.end.y - this.start.y) / time) * 16.666666;
-    }
-
     // Start fling if the velocity is great enough
-    if (time < 250 && (Math.abs(this.velocityX) >= 6 || Math.abs(this.velocityY) >= 6)) {
+    if ((Math.abs(this.velocityX) >= 6 || Math.abs(this.velocityY) >= 6)) {
         this.animating = true;
         requestAnimationFrame(this.renderFlingFrame.bind(this));
     } else {
@@ -787,23 +778,31 @@ EthosJS.Dragger.prototype.handlePointerMove = function(ev) {
         return;
     } if (this.handling === false) {
         return;
+    } if (this.requestedFrame !== null) { // Throttle the move event because it's fired a lot
+        return;
     }
 
-    // Get the new X,Y deltas
+    // Calculate the new X,Y deltas
+    var deltaX = ev.pageX - this.lastCursorX;
+    var deltaY = ev.pageY - this.lastCursorY;
+    this.lastCursorX = ev.pageX;
+    this.lastCursorY = ev.pageY;
+    
+    // Set new matrix/velocity values
     if (this.axis & EthosJS.Dragger.AXIS_X) {
         this.matrix[this.matrix.length - 2] = this.startMatrix[this.matrix.length - 2] + (ev.pageX - this.start.x);
+        this.velocityX = deltaX;
     }
     if (this.axis & EthosJS.Dragger.AXIS_Y) {
         this.matrix[this.matrix.length - 1] = this.startMatrix[this.matrix.length - 1] + (ev.pageY - this.start.y);
+        this.velocityY = deltaY;
     }
 
     // Check bounds
     this.checkBounds();
 
-    // Limit this because it's fired a lot
-    if (this.requestedFrame == null) {
-        this.requestedFrame = requestAnimationFrame(this.renderMatrix.bind(this));
-    }
+    // Request animation frame
+    this.requestedFrame = requestAnimationFrame(this.renderMatrix.bind(this));
 };
 
 
