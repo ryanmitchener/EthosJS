@@ -31,4 +31,6 @@ window.addEventListener("windowsizechange", function(ev) {
     console.log(ev.detail);
 });
 
-new ejs.Dragger(".dragger");
+new ejs.Dragger(".dragger")
+    .setBoundingRect(document.querySelector(".bounds"))
+    .setRebound(.5);
