@@ -117,6 +117,8 @@ EthosJS.Dragger.prototype.handlePointerDown = function(ev) {
     this.start.time = new Date().getTime();
     this.start.x = ev.pageX;
     this.start.y = ev.pageY;
+    this.updateComputedStyle();
+    this.setWillChange();
     this.startMatrix = this.getTransformMatrix();
     this.matrix = this.getTransformMatrix();
 };
@@ -147,6 +149,8 @@ EthosJS.Dragger.prototype.handlePointerUp = function(ev) {
     if (time < 250 && (Math.abs(this.velocityX) >= 6 || Math.abs(this.velocityY) >= 6)) {
         this.animating = true;
         requestAnimationFrame(this.renderFlingFrame.bind(this));
+    } else {
+        this.handleEndHandling();
     }
 };
 
@@ -180,10 +184,18 @@ EthosJS.Dragger.prototype.handlePointerMove = function(ev) {
 
 
 /**
+ * Get the computed style
+ */
+EthosJS.Dragger.prototype.updateComputedStyle = function() {
+    this.computedStyle = getComputedStyle(this.element);
+}
+
+
+/**
  * Get the current transform
  */
 EthosJS.Dragger.prototype.getTransformMatrix = function() {
-    var matrix = getComputedStyle(this.element)[EthosJS.transform];
+    var matrix = this.computedStyle[EthosJS.transform];
     matrix = (matrix === "none") ? [1,0,0,1,0,0] : matrix.replace(/[^\d\.\,\-]/g, "").split(",").map(Number);
     return matrix;
 }
@@ -202,8 +214,8 @@ EthosJS.Dragger.prototype.renderMatrix = function(matrix) {
  * Handle Fling
  */
 EthosJS.Dragger.prototype.renderFlingFrame = function() {
-    if (this.handling || (Math.abs(this.velocityX) < 1 && Math.abs(this.velocityY) < 1)) {
-        this.animating = false;
+    if (this.handling || (Math.abs(this.velocityX) < .1 && Math.abs(this.velocityY) < .1)) {
+        this.handleEndHandling();
         return;
     }
     this.velocityX *= this.friction;
@@ -243,4 +255,30 @@ EthosJS.Dragger.prototype.checkBounds = function() {
     if (this.matrix[this.matrix.length - 1] !== oldY) {
         this.velocityY *= -this.rebound;
     }
+};
+
+
+/**
+ * Handle when all handling and animations have stopped
+ */
+EthosJS.Dragger.prototype.handleEndHandling = function() {
+    this.animating = false;
+    this.removeWillChange();
+};
+
+
+/**
+ * Set will-change
+ */
+EthosJS.Dragger.prototype.setWillChange = function() {
+    this.removeWillChange();
+    this.element.style.willChange = (this.computedStyle.willChange === "auto") ? "transform" : this.computedStyle.willChange + ",transform";
+};
+
+
+/**
+ * Remove will-change
+ */
+EthosJS.Dragger.prototype.removeWillChange = function() {
+    this.element.style.willChange = this.computedStyle.willChange.replace(/(,\s)?transform/g, "");
 };

@@ -33,4 +33,4 @@ window.addEventListener("windowsizechange", function(ev) {
 
 new ejs.Dragger(".dragger")
     .setBoundingRect(document.querySelector(".bounds"))
-    .setRebound(.5);
+    .setRebound(1);
