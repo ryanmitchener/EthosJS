@@ -345,50 +345,59 @@ EthosJS.Animation.prototype._render = function() {
 /** 
  * Set a bit
  * 
- * @param int byte The value to set a bit on
+ * @param int data The data to set a bit on
  * @param int bit The bit index to set (0 indexed)  
  */
-EthosJS.setBit = function(byte, bit) {
-    return byte | (1 << bit);
+EthosJS.setBit = function(data, bit) {
+    return data | (1 << bit);
 }
 
 
 /** 
  * Unset a bit
  * 
- * @param int byte The value to set a bit on
+ * @param int data The data to set a bit on
  * @param int bit The bit index to set (0 indexed)  
  */
-EthosJS.unsetBit = function(byte, bit) {
-    return byte & ~(1 << bit);
+EthosJS.unsetBit = function(data, bit) {
+    return data & ~(1 << bit);
 }
 
 
 /** 
- * Append a value to the beginning of an existing byte/integer
+ * Toggle a bit
  * 
- * @param int byte The value to append another value to
+ * @param int data The data to set a bit on
+ * @param int bit The bit index to set (0 indexed)  
+ */
+EthosJS.toggleBit = function(data, bit) {
+    return data ^= (1 << bit);
+}
+
+
+/** 
+ * Append bit(s) to the beginning of an existing byte/integer
+ * 
+ * @param int data The data to add bit(s) to
  * @param int value The value to append
  * @param int maxValue (optional) The maximum value the appended value can be 
  */
-EthosJS.appendBitValue = function(byte, value, maxValue) {
+EthosJS.addBits = function(data, value, maxValue) {
     maxValue = (maxValue === undefined) ? value : maxValue;
     var shift = Math.ceil(Math.log2(maxValue));
-    return (byte << shift) | value;
+    return (data << shift) | value;
 }
 
 
 /** 
- * Read a value from a byte/integer
- * This function allows reading of whole values based on a maximum value
+ * Read bit(s) from a byte/integer
  * 
- * @param int byte The value to read from
- * @param int shift The shift amount/location in the data to start reading a byte from 
- * @param int maxValue The maximum value the read value can be  
+ * @param int data The data to read from
+ * @param int firstBit The location in the data to start reading a byte from 
+ * @param int count The length of the data to read
  */
-EthosJS.readBitValue = function(byte, shift, maxValue) {
-    var mask = Math.pow(2, Math.ceil(Math.log2(maxValue))) - 1;
-    return (byte >> shift) & mask;
+EthosJS.readBits = function(data, firstBit, count) {
+    return (data >> firstBit) & ((1 << count) - 1);
 }
 
 /* -------------------- */
@@ -476,7 +485,7 @@ EthosJS.Config.registerUpdateListener = function(listener, type) {
  *
  * Copyright (C) 2008 Apple Inc. All Rights Reserved.
  *
- * THIS SOFTWARE IS PROVIDED BY APPLE INC. ``AS IS'' AND ANY
+ * THIS SOFTWARE IS PROVIDED BY APPLE INC. 'AS IS' AND ANY
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
  * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL APPLE INC. OR
@@ -639,6 +648,7 @@ EthosJS.Dragger = function(element) {
     this.rebound = 0;
     this.velocityX = 0;
     this.velocityY = 0;
+    this.stopVelocity = 0.1;
     this.lastCursorX = 0;
     this.lastCursorY = 0;
     this.friction = 0.95;
@@ -719,7 +729,7 @@ EthosJS.Dragger.prototype.setFriction = function(friction) {
 /**
  * Set the axis the element should be Dragger on
  * 
- * @param int rebount The amount of rebound to have when interacting with a boundary (0.00 - 1.00) 0 being none.
+ * @param int rebound The amount of rebound to have when interacting with a boundary (0.00 - 1.00) 0 being none.
  */
 EthosJS.Dragger.prototype.setRebound = function(rebound) {
     this.rebound = rebound;
@@ -728,11 +738,24 @@ EthosJS.Dragger.prototype.setRebound = function(rebound) {
 
 
 /**
+ * Set the velocity at which the animation should stop
+ *
+ * @param float velocity The threshold velocity (pixels per frame) at which the dragger will stop animating
+ */
+EthosJS.Dragger.prototype.setStopVelocity = function(velocity) {
+    this.stopVelocity = velocity;
+}
+
+
+
+/**
  * Handle the pointer being pressed
  */
 EthosJS.Dragger.prototype.handlePointerDown = function(ev) {
     if (!this.enabled) {
         return;
+    } else if (ev instanceof TouchEvent) {
+        ev = ev.touches[0];
     }
     this.handling = true;
     this.animating = false;
@@ -754,6 +777,8 @@ EthosJS.Dragger.prototype.handlePointerDown = function(ev) {
 EthosJS.Dragger.prototype.handlePointerUp = function(ev) {
     if (!this.enabled) {
         return;
+    } else if (ev instanceof TouchEvent) {
+        ev = ev.changedTouches[0];
     }
     this.handling = false;
     this.end.time = new Date().getTime();
@@ -780,6 +805,8 @@ EthosJS.Dragger.prototype.handlePointerMove = function(ev) {
         return;
     } if (this.requestedFrame !== null) { // Throttle the move event because it's fired a lot
         return;
+    } else if (ev instanceof TouchEvent) {
+        ev = ev.touches[0];
     }
 
     // Calculate the new X,Y deltas
@@ -837,7 +864,8 @@ EthosJS.Dragger.prototype.renderMatrix = function(matrix) {
  * Handle Fling
  */
 EthosJS.Dragger.prototype.renderFlingFrame = function() {
-    if (this.handling || (Math.abs(this.velocityX) < .1 && Math.abs(this.velocityY) < .1)) {
+    if (this.handling || (Math.abs(this.velocityX) < this.stopVelocity && 
+            Math.abs(this.velocityY) < this.stopVelocity)) {
         this.handleEndHandling();
         return;
     }

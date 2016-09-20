@@ -15,6 +15,7 @@ EthosJS.Dragger = function(element) {
     this.rebound = 0;
     this.velocityX = 0;
     this.velocityY = 0;
+    this.stopVelocity = 0.1;
     this.lastCursorX = 0;
     this.lastCursorY = 0;
     this.friction = 0.95;
@@ -95,7 +96,7 @@ EthosJS.Dragger.prototype.setFriction = function(friction) {
 /**
  * Set the axis the element should be Dragger on
  * 
- * @param int rebount The amount of rebound to have when interacting with a boundary (0.00 - 1.00) 0 being none.
+ * @param int rebound The amount of rebound to have when interacting with a boundary (0.00 - 1.00) 0 being none.
  */
 EthosJS.Dragger.prototype.setRebound = function(rebound) {
     this.rebound = rebound;
@@ -104,11 +105,24 @@ EthosJS.Dragger.prototype.setRebound = function(rebound) {
 
 
 /**
+ * Set the velocity at which the animation should stop
+ *
+ * @param float velocity The threshold velocity (pixels per frame) at which the dragger will stop animating
+ */
+EthosJS.Dragger.prototype.setStopVelocity = function(velocity) {
+    this.stopVelocity = velocity;
+}
+
+
+
+/**
  * Handle the pointer being pressed
  */
 EthosJS.Dragger.prototype.handlePointerDown = function(ev) {
     if (!this.enabled) {
         return;
+    } else if (ev instanceof TouchEvent) {
+        ev = ev.touches[0];
     }
     this.handling = true;
     this.animating = false;
@@ -130,6 +144,8 @@ EthosJS.Dragger.prototype.handlePointerDown = function(ev) {
 EthosJS.Dragger.prototype.handlePointerUp = function(ev) {
     if (!this.enabled) {
         return;
+    } else if (ev instanceof TouchEvent) {
+        ev = ev.changedTouches[0];
     }
     this.handling = false;
     this.end.time = new Date().getTime();
@@ -156,6 +172,8 @@ EthosJS.Dragger.prototype.handlePointerMove = function(ev) {
         return;
     } if (this.requestedFrame !== null) { // Throttle the move event because it's fired a lot
         return;
+    } else if (ev instanceof TouchEvent) {
+        ev = ev.touches[0];
     }
 
     // Calculate the new X,Y deltas
@@ -213,7 +231,8 @@ EthosJS.Dragger.prototype.renderMatrix = function(matrix) {
  * Handle Fling
  */
 EthosJS.Dragger.prototype.renderFlingFrame = function() {
-    if (this.handling || (Math.abs(this.velocityX) < .1 && Math.abs(this.velocityY) < .1)) {
+    if (this.handling || (Math.abs(this.velocityX) < this.stopVelocity && 
+            Math.abs(this.velocityY) < this.stopVelocity)) {
         this.handleEndHandling();
         return;
     }
