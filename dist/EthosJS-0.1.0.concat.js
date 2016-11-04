@@ -158,6 +158,9 @@ EthosJS.scrollTo = function(element, y) {
     var isWindow = (element === null) ? true : false; 
     var start = (isWindow) ? pageYOffset : element.scrollTop;
     var difference = Math.abs(start - y);
+    if (difference === 0) {
+        return;
+    }
     new EthosJS.Animation()
         .setCurve(EthosJS.Curve.EaseInOutQuart)
         .setDuration(1000)
