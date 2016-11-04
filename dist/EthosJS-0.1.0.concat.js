@@ -8,6 +8,14 @@
 // Setup global object
 window.EthosJS = window.ejs = {};
 
+
+// Simple alias for querySelector
+EthosJS.query = document.querySelector.bind(document);
+
+// Simple alias for querySelectorAll
+EthosJS.queryAll = document.querySelectorAll.bind(document);
+
+
 // Method for verifying if an element matches a CSS selector
 EthosJS.matches = (function() {
     var matches = null;
@@ -85,6 +93,30 @@ EthosJS.arrayMax = function(array) {
 };
 
 
+// Find the true offset top for an element
+EthosJS.offsetTop = function(element) {
+    var top = element.offsetTop;
+    var parent = element.offsetParent;
+    while (parent !== null) {
+        top += parent.offsetTop;
+        parent = parent.offsetParent;
+    }
+    return top;
+};
+
+
+// Find the true offset left for an element
+EthosJS.offsetLeft = function(element) {
+    var left = element.offsetLeft;
+    var parent = element.offsetParent;
+    while (parent !== null) {
+        left += parent.offsetLeft;
+        parent = parent.offsetParent;
+    }
+    return left;
+};
+
+
 /**
  * Copy an Object and its values recursively into a new instance.
  *
@@ -120,7 +152,7 @@ EthosJS.copy = function(src, preservePrototype) {
 
 
 /**
- * Animate scroll to a particular Y coordinate on the page or on an element
+ * Animate scroll on a particular element to a particular Y coordinate
  */
 EthosJS.scrollTo = function(element, y) {
     var isWindow = (element === null) ? true : false; 
@@ -128,16 +160,26 @@ EthosJS.scrollTo = function(element, y) {
     var difference = Math.abs(start - y);
     new EthosJS.Animation()
         .setCurve(EthosJS.Curve.EaseInOutQuart)
-        .setDuration(800)
+        .setDuration(1000)
         .setRenderCallback(function(interpolatedTime) {
             if (isWindow) {
-                scrollTo(pageXOffset, start + ((y > start) ? (difference * interpolatedTime) : -(difference * interpolatedTime)));
+                window.scrollTo(pageXOffset, start + ((y > start) ? (difference * interpolatedTime) : -(difference * interpolatedTime)));
             } else {
                 element.scrollTop = (start + ((y > start) ? (difference * interpolatedTime) : -(difference * interpolatedTime)));
             }
         })
         .play();
-}
+};
+
+
+/**
+ * Animate scroll to a particular element with or without a specified padding
+ */
+EthosJS.scrollToElement = function(element, padding) {
+    padding = (padding === undefined) ? 0 : padding;
+    var y = scrollY + (element.getBoundingClientRect().top - padding);
+    EthosJS.scrollTo(null, y);
+};
 
 /* -------------------- */
 
