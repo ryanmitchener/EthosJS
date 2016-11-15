@@ -180,6 +180,6 @@ EthosJS.scrollTo = function(element, y) {
  */
 EthosJS.scrollToElement = function(element, padding) {
     padding = (padding === undefined) ? 0 : padding;
-    var y = scrollY + (element.getBoundingClientRect().top - padding);
+    var y = pageYOffset + (element.getBoundingClientRect().top - padding);
     EthosJS.scrollTo(null, y);
 };
