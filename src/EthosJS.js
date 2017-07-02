@@ -125,7 +125,7 @@ EthosJS.offsetLeft = function(element) {
  * @params object src The object to copy
  * @params boolean preservePrototype (default: true) Preserve the prototype of every object
  *
- * @return objeect A copy of the src object
+ * @return object A copy of the src object
  */
 EthosJS.copy = function(src, preservePrototype) {
     // Setup default preservePrototype

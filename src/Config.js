@@ -12,7 +12,7 @@ EthosJS.Config = {
 
 
 /**
- * All of the update listener
+ * All of the update listeners
  */
 EthosJS.Config.updateListeners = {};
 
